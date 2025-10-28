@@ -1,4 +1,6 @@
 import random, time
+import matplotlib.pyplot as plt
+
 
 def create_array(n, mode):
     if mode == 'A':
@@ -63,9 +65,9 @@ def average(algo, n, mode):
     total_cmp = total_swp = total_t = 0
     for _ in range(30):
         T = create_array(n, mode)
-        start = time.time()
+        start = time.process_time_ns()
         c, s = algo(T[:])
-        end = time.time()
+        end = time.process_time_ns()
         total_cmp += c
         total_swp += s
         total_t += (end - start)
@@ -88,3 +90,19 @@ for n in sizes:
         for name, f in algos.items():
             c, d, t = average(f, n, m)
             print(f"{name:10s} | Comparisons: {c:.1f} | Swaps: {d:.1f} | Time: {t:.6f}s")
+
+for m, m_name in modes.items():
+    times = {name: [] for name in algos}
+    for n in sizes:
+        for name, f in algos.items():
+            c, d, t = average(f, n, m)
+            times[name].append(t)
+    plt.figure()
+    for name, t_list in times.items():
+        plt.plot(sizes, t_list, marker='o', label=name)
+    plt.title(f"Execution Time - {m_name} Case")
+    plt.xlabel("Array Size")
+    plt.ylabel("Average Time (s)")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
