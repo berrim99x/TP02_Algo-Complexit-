@@ -1,15 +1,16 @@
-import random, time
+import random
+import time
 import matplotlib.pyplot as plt
 
-
+# ---------- Array Generation ----------
 def create_array(n, mode):
     if mode == 'A':
         return list(range(n))
     elif mode == 'D':
         return list(range(n, 0, -1))
-    else:
-        return [random.randint(0, n) for _ in range(n)]
+    return [random.randint(0, n) for _ in range(n)]
 
+# ---------- Sorting Algorithms ----------
 def selection_sort(T):
     n = len(T)
     cmp = swp = 0
@@ -61,9 +62,10 @@ def exchange_sort(T):
                 swp += 1
     return cmp, swp
 
-def average(algo, n, mode):
+# ---------- Performance Measurement ----------
+def average(algo, n, mode, runs=30):
     total_cmp = total_swp = total_t = 0
-    for _ in range(30):
+    for _ in range(runs):
         T = create_array(n, mode)
         start = time.process_time_ns()
         c, s = algo(T[:])
@@ -71,8 +73,9 @@ def average(algo, n, mode):
         total_cmp += c
         total_swp += s
         total_t += (end - start)
-    return total_cmp / 30, total_swp / 30, total_t / 30
+    return total_cmp / runs, total_swp / runs, total_t / runs
 
+# ---------- Configuration ----------
 algos = {
     "Selection": selection_sort,
     "Bubble": bubble_sort,
@@ -83,26 +86,39 @@ algos = {
 modes = {'A': 'Ascending', 'D': 'Descending', 'R': 'Random'}
 sizes = [10, 100, 1000]
 
-for n in sizes:
-    print(f"\n--- Array size: {n} ---")
-    for m, m_name in modes.items():
-        print(f"\nCase: {m_name}")
-        for name, f in algos.items():
-            c, d, t = average(f, n, m)
-            print(f"{name:10s} | Comparisons: {c:.1f} | Swaps: {d:.1f} | Time: {t:.6f}s")
+# ---------- Run Experiments ----------
+results = {}
 
 for m, m_name in modes.items():
-    times = {name: [] for name in algos}
-    for n in sizes:
-        for name, f in algos.items():
-            c, d, t = average(f, n, m)
-            times[name].append(t)
-    plt.figure()
-    for name, t_list in times.items():
-        plt.plot(sizes, t_list, marker='o', label=name)
-    plt.title(f"Execution Time - {m_name} Case")
-    plt.xlabel("Array Size")
-    plt.ylabel("Average Time (s)")
-    plt.legend()
-    plt.grid(True)
-    plt.show()
+    results[m_name] = {}
+    for name, algo in algos.items():
+        results[m_name][name] = []
+        for n in sizes:
+            c, s, t = average(algo, n, m)
+            results[m_name][name].append((c, s, t))
+
+# ---------- Print Results ----------
+for n in sizes:
+    print(f"\n--- Array size: {n} ---")
+    for m_name in modes.values():
+        print(f"\nCase: {m_name}")
+        for algo_name in algos:
+            idx = sizes.index(n)
+            c, s, t = results[m_name][algo_name][idx]
+            print(f"{algo_name:10s} | Comparisons: {c:.1f} | Swaps: {s:.1f} | Time: {t/1e9:.6f}s")
+
+# ---------- Plot Results ----------
+plt.figure(figsize=(10, 6))
+for m_name, algo_data in results.items():
+    for algo_name, metrics in algo_data.items():
+        times = [t for (_, _, t) in metrics]
+        plt.plot(sizes, times, marker='o', label=f"{algo_name} - {m_name}")
+
+plt.title("Execution Time Comparison (All Modes)")
+plt.xlabel("Array Size")
+plt.ylabel("Average Time (ns)")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
